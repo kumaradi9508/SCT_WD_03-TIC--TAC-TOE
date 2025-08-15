@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic‑Tac‑Toe — Glass Neo UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#0f1020; /* deep indigo */
+      --bg2:#12132a;
+      --glass:rgba(255,255,255,.06);
+      --text:#e9ecf1;
+      --muted:#aab3c5;
+      --accent:#6ee7ff; /* cyan */
+      --accent2:#b17eff; /* purple */
+      --win:#7CFFCB; /* mint */
+      --lose:#ff7a7a;
+      --shadow: 0 10px 40px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: Outfit, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text); background: radial-gradient(1200px 1200px at -10% -10%, rgba(177,126,255,.25), transparent 60%),
+               radial-gradient(1000px 900px at 110% 20%, rgba(110,231,255,.22), transparent 60%),
+               linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 100%);
+      display:grid; place-items:center; padding:24px; overflow-x:hidden;
+    }
+
+    .app{
+      width:min(980px, 96vw);
+      display:grid; gap:22px; grid-template-columns: 1fr; 
+    }
+
+    .card{
+      background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      backdrop-filter: blur(14px) saturate(120%);
+    }
+
+    header.card{ padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px; position:relative; overflow:hidden; }
+
+    header h1{font-size: clamp(22px, 4vw, 34px); margin:0; letter-spacing:.4px;}
+    header h1 span{background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+
+    .controls{ display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:flex-end; }
+
+    .select, .button, .toggle{
+      display:inline-flex; align-items:center; gap:10px; color:var(--text);
+      background:var(--glass); border:1px solid rgba(255,255,255,.14); padding:10px 14px; 
+      border-radius:14px; box-shadow: inset 0 -6px 14px rgba(255,255,255,.03), 0 6px 20px rgba(0,0,0,.18);
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .select:focus-within, .button:focus-visible{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(110,231,255,.25), var(--shadow);}
+    select, .toggle input{ background:transparent; color:var(--text); border:none; font:600 14px Outfit, sans-serif; }
+    select{appearance:none; padding-right:16px; cursor:pointer}
+    .button{ cursor:pointer; font-weight:700; }
+    .button:hover{ transform: translateY(-1px); }
+    .button.primary{ background: linear-gradient(90deg, rgba(110,231,255,.15), rgba(177,126,255,.15)); border-color:rgba(255,255,255,.22); }
+
+    .grid-wrap{ display:grid; grid-template-columns: 1fr 360px; gap:22px; }
+    @media (max-width: 900px){ .grid-wrap{ grid-template-columns: 1fr; } }
+
+    .board.card{ padding:20px; display:grid; place-items:center; position:relative; }
+    .board-inner{ 
+      width:min(520px, 86vw); aspect-ratio:1/1; display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; 
+      perspective:800px; 
+    }
+    .cell{
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03)); 
+      border:1px solid rgba(255,255,255,.15); border-radius:18px; display:grid; place-items:center; cursor:pointer; position:relative;
+      box-shadow:var(--shadow);
+      transition: transform .12s ease, box-shadow .12s ease, border-color .2s ease;
+      user-select:none; font-weight:800; font-size: clamp(42px, 8.5vw, 78px); letter-spacing:2px;
+    }
+    .cell:hover{ transform: translateY(-2px); }
+    .cell.filled{ cursor:not-allowed; }
+    .cell.win{ border-color: rgba(124,255,203,.9); box-shadow: 0 0 0 3px rgba(124,255,203,.25), var(--shadow); }
+
+    .hud.card{ padding:20px; display:grid; gap:18px; }
+    .status{ font-size: clamp(16px, 2.4vw, 18px); color:var(--muted); }
+    .status strong{ color:var(--text); }
+
+    .score{
+      display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;
+    }
+    .score .tile{
+      background:var(--glass); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:12px; text-align:center; 
+    }
+    .score h3{ margin:2px 0 8px; font-weight:800; letter-spacing:.6px; font-size:14px; color:var(--muted); }
+    .score .value{ font-size:28px; font-weight:800; }
+
+    .footer-controls{ display:flex; gap:10px; flex-wrap:wrap; }
+
+    /* Turn indicator */
+    .turn{
+      display:flex; gap:10px; align-items:center; font-weight:700;
+    }
+    .dot{ width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 18px rgba(110,231,255,.65); }
+
+    /* Glow ring decoration */
+    .glow{ position:absolute; inset:-40% -30% auto auto; width:420px; height:420px; background:radial-gradient(circle at 30% 30%, rgba(110,231,255,.4), transparent 60%); filter:blur(22px); opacity:.6; pointer-events:none; }
+    .glow.purple{ inset:auto auto -40% -40%; background:radial-gradient(circle at 70% 50%, rgba(177,126,255,.4), transparent 60%); }
+
+    /* Toast */
+    .toast{ position:fixed; left:50%; top:14px; transform:translateX(-50%); background:rgba(20,20,30,.7); border:1px solid rgba(255,255,255,.15); color:#fff; padding:10px 14px; border-radius:12px; opacity:0; transition:opacity .25s ease, transform .25s ease; backdrop-filter:blur(8px)}
+    .toast.show{ opacity:1; transform:translateX(-50%) translateY(6px)}
+
+    /* Accessibility */
+    .cell:focus-visible{ outline:3px solid rgba(110,231,255,.45); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="card">
+      <h1><span>Tic‑Tac‑Toe</span> <small style="font-size:.55em; color:var(--muted); font-weight:600">— XOXO Wars</small></h1>
+      <div class="controls">
+        <label class="select" title="Game mode">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 7H3m18 5H3m18 5H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <select id="mode">
+            <option value="pvc" selected>Player vs Computer</option>
+            <option value="pvp">Player vs Player</option>
+          </select>
+        </label>
+        <label class="select" title="Choose your mark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>
+          <select id="playerMark">
+            <option value="X" selected>Play as X</option>
+            <option value="O">Play as O</option>
+          </select>
+        </label>
+        <button class="button primary" id="newRound">New Round</button>
+        <button class="button" id="resetAll">Reset Scores</button>
+      </div>
+    </header>
+
+    <div class="grid-wrap">
+      <section class="board card">
+        <div class="glow"></div>
+        <div class="glow purple"></div>
+        <div class="board-inner" id="board" role="grid" aria-label="Tic Tac Toe Board"></div>
+      </section>
+
+      <aside class="hud card">
+        <div class="turn"><span class="dot" id="turnDot"></span><span id="turnText">Turn: X</span></div>
+        <div class="status" id="status">Play a move to begin.</div>
+
+        <div class="score">
+          <div class="tile">
+            <h3>Player X</h3>
+            <div class="value" id="scoreX">0</div>
+          </div>
+          <div class="tile">
+            <h3>Draws</h3>
+            <div class="value" id="scoreD">0</div>
+          </div>
+          <div class="tile">
+            <h3>Player O</h3>
+            <div class="value" id="scoreO">0</div>
+          </div>
+        </div>
+
+        <div class="footer-controls">
+          <button class="button primary" id="btnUndo">Undo</button>
+          <button class="button" id="btnHint">Hint</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // ------- Utilities -------
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8], // rows
+      [0,3,6],[1,4,7],[2,5,8], // cols
+      [0,4,8],[2,4,6]          // diagonals
+    ];
+
+    const state = {
+      board: Array(9).fill(''),
+      xTurn: true,
+      mode: 'pvc', // pvc or pvp
+      playerMark: 'X',
+      scores: { X:0, O:0, D:0 },
+      history: [], // stack of {idx, prev}
+      over: false,
+    };
+
+    const boardEl = $('#board');
+    const statusEl = $('#status');
+    const turnText = $('#turnText');
+    const turnDot = $('#turnDot');
+
+    function showToast(text){
+      const t = $('#toast');
+      t.textContent = text; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 1500);
+    }
+
+    function updateHUD(){
+      turnText.textContent = `Turn: ${state.xTurn ? 'X' : 'O'}`;
+      turnDot.style.boxShadow = state.xTurn ? '0 0 18px rgba(110,231,255,.65)' : '0 0 18px rgba(177,126,255,.65)';
+      $('#scoreX').textContent = state.scores.X;
+      $('#scoreO').textContent = state.scores.O;
+      $('#scoreD').textContent = state.scores.D;
+    }
+
+    function renderBoard(){
+      boardEl.innerHTML = '';
+      state.board.forEach((val, i)=>{
+        const btn = document.createElement('button');
+        btn.className = 'cell' + (val ? ' filled' : '');
+        btn.setAttribute('role','gridcell');
+        btn.setAttribute('aria-label', `Cell ${i+1}`);
+        btn.tabIndex = 0;
+        btn.textContent = val;
+        btn.addEventListener('click', ()=> handleMove(i));
+        btn.addEventListener('keydown', (e)=>{ if(['Enter',' '].includes(e.key)) handleMove(i) });
+        boardEl.appendChild(btn);
+      });
+    }
+
+    function winningInfo(b){
+      for(const line of WIN_LINES){
+        const [a,b2,c] = line;
+        if(b[a] && b[a]===b[b2] && b[a]===b[c]) return {winner:b[a], line};
+      }
+      if(!b.includes('')) return {winner:'D', line:null};
+      return null;
+    }
+
+    function setStatus(text){ statusEl.textContent = text; }
+
+    function highlightWin(line){
+      if(!line) return;
+      const cells = $$('.cell', boardEl);
+      line.forEach(i=> cells[i].classList.add('win'));
+    }
+
+    function resetRound(keepScores=true){
+      state.board = Array(9).fill('');
+      state.history = [];
+      state.over = false;
+      // Starting turn: if PvC and player chose O, computer starts
+      state.xTurn = true;
+      renderBoard(); updateHUD();
+      setStatus('New round. Your move!');
+      if(keepScores && state.mode==='pvc' && state.playerMark==='O'){
+        // let AI (X) start
+        setTimeout(aiMove, 420);
+      }
+    }
+
+    function resetAll(){
+      state.scores = {X:0,O:0,D:0};
+      resetRound(false);
+      updateHUD();
+      setStatus('Scores reset.');
+    }
+
+    function handleMove(index){
+      if(state.over || state.board[index]) return;
+      const mark = state.xTurn ? 'X' : 'O';
+      state.history.push({idx:index, prev:''});
+      state.board[index] = mark;
+      renderBoard();
+      const info = winningInfo(state.board);
+      if(info){
+        endRound(info);
+      } else {
+        state.xTurn = !state.xTurn;
+        updateHUD();
+        setStatus(`Turn switched to ${state.xTurn ? 'X' : 'O'}.`);
+        if(state.mode==='pvc' && ((state.playerMark==='X' && !state.xTurn) || (state.playerMark==='O' && state.xTurn))){
+          setTimeout(aiMove, 320);
+        }
+      }
+    }
+
+    function endRound(info){
+      state.over = true;
+      if(info.winner==='D'){
+        state.scores.D++;
+        setStatus("It's a draw.");
+        showToast('Draw!');
+      } else {
+        state.scores[info.winner]++;
+        highlightWin(info.line);
+        setStatus(`Winner: ${info.winner}`);
+        showToast(`${info.winner} wins!`);
+      }
+      updateHUD();
+    }
+
+    // --------- Unbeatable AI (Minimax with small optimizations) ---------
+    function aiMove(){
+      if(state.over) return;
+      const ai = state.playerMark==='X' ? 'O' : 'X';
+      const human = state.playerMark;
+      const board = state.board.slice();
+
+      // 1) If center available, prioritize
+      const emptyIdx = board.map((v,i)=> v?null:i).filter(v=>v!==null);
+      let move = null;
+      if(emptyIdx.includes(4)) move = 4;
+
+      // 2) Try to win in one move
+      if(move===null){
+        for(const i of emptyIdx){
+          const b = board.slice(); b[i]=ai;
+          if(winningInfo(b)?.winner===ai){ move=i; break; }
+        }
+      }
+      // 3) Block human winning in one
+      if(move===null){
+        for(const i of emptyIdx){
+          const b = board.slice(); b[i]=human;
+          if(winningInfo(b)?.winner===human){ move=i; break; }
+        }
+      }
+      // 4) Full minimax as fallback
+      if(move===null){
+        move = bestMoveMinimax(board, ai);
+      }
+      if(move!=null){ handleMove(move); }
+    }
+
+    function bestMoveMinimax(board, ai){
+      const human = ai==='X' ? 'O' : 'X';
+      let bestScore = -Infinity, bestIdx = null;
+      for(let i=0;i<9;i++){
+        if(board[i]) continue;
+        board[i]=ai;
+        const score = minimax(board, false, ai, human, -Infinity, Infinity);
+        board[i]='';
+        if(score>bestScore){ bestScore=score; bestIdx=i; }
+      }
+      return bestIdx;
+    }
+
+    function minimax(b, isMax, ai, human, alpha, beta){
+      const info = winningInfo(b);
+      if(info){
+        if(info.winner==='D') return 0;
+        return info.winner===ai ? 10 : -10;
+      }
+      if(isMax){
+        let best = -Infinity;
+        for(let i=0;i<9;i++) if(!b[i]){ b[i]=ai; best=Math.max(best, minimax(b,false,ai,human,alpha,beta)); b[i]=''; alpha=Math.max(alpha,best); if(beta<=alpha) break; }
+        return best-1; // prefer faster wins
+      } else {
+        let best = Infinity;
+        for(let i=0;i<9;i++) if(!b[i]){ b[i]=human; best=Math.min(best, minimax(b,true,ai,human,alpha,beta)); b[i]=''; beta=Math.min(beta,best); if(beta<=alpha) break; }
+        return best+1; // prefer slower losses
+      }
+    }
+
+    // --------- Extras ---------
+    function undo(){
+      if(!state.history.length || state.over) return; // simple undo only before round end
+      const last = state.history.pop();
+      state.board[last.idx] = last.prev;
+      state.xTurn = !state.xTurn;
+      renderBoard(); updateHUD(); setStatus('Move undone.');
+    }
+
+    function hint(){
+      if(state.over) return;
+      const mark = state.xTurn ? 'X' : 'O';
+      const ai = mark; // suggest best for the current player
+      const board = state.board.slice();
+      const i = bestMoveMinimax(board, ai);
+      if(i==null){ showToast('No hint available'); return; }
+      const cells = $$('.cell');
+      cells[i].animate([
+        { boxShadow:'0 0 0 0 rgba(110,231,255,.0)' },
+        { boxShadow:'0 0 0 16px rgba(110,231,255,.18)' },
+        { boxShadow:'0 0 0 0 rgba(110,231,255,.0)' },
+      ],{ duration:650, iterations:2 });
+      showToast('Highlighted a good move');
+    }
+
+    // --------- Wire up UI ---------
+    function init(){
+      // Build cells once; content updates later
+      renderBoard();
+      updateHUD();
+
+      $('#mode').addEventListener('change', e=>{
+        state.mode = e.target.value;
+        resetRound();
+        showToast(state.mode==='pvc' ? 'Player vs Computer' : 'Player vs Player');
+      });
+
+      $('#playerMark').addEventListener('change', e=>{
+        state.playerMark = e.target.value;
+        resetRound();
+        showToast(`You play as ${state.playerMark}`);
+      });
+
+      $('#newRound').addEventListener('click', ()=> resetRound());
+      $('#resetAll').addEventListener('click', ()=> resetAll());
+      $('#btnUndo').addEventListener('click', ()=> undo());
+      $('#btnHint').addEventListener('click', ()=> hint());
+
+      // Auto-start AI if user is O in PvC
+      if(state.mode==='pvc' && state.playerMark==='O') setTimeout(aiMove, 420);
+    }
+
+    init();
+  </script>
+</body>
+</html>

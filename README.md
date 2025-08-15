@@ -1,6 +1,6 @@
 # SCT_WD_03-TIC--TAC-TOE
 
-# SCT_WD_03-Task-03-TIC-TAC-TOE 🎮 Tic Tac Toe – XOXO Wars (Modern UI Edition)  
+# SCT_WD_03-Task-03-TIC-TAC-TOE - XOXO Wars (Modern UI Edition)  
 SkillCraft Technology – Web Development Internship Task 03: Build a Fun & Interactive Tic Tac Toe Game with Responsive Design, Smart Win Detection, and Theme Support using HTML, CSS, and JavaScript.
 
 📌 Project Overview:

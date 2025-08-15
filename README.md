@@ -37,7 +37,7 @@ It’s a stylish, responsive, and interactive version of the classic game featur
 
 🌐 Live Demo
 
- Github: 
+ Github: https://github.com/kumaradi9508/SCT_WD_03-TIC--TAC-TOE
 
  Codepen: https://codepen.io/Adi-Satya/pen/jEbYBYv
 
